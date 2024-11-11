@@ -1,5 +1,7 @@
 from lib.MetroEstructuras import *
 
+import math
+
 import sys
 
 def generarTablaEstaciones(nombre_archivo_estaciones, nombre_archivo_distancias):
@@ -82,3 +84,70 @@ def obtenerEstacionInicioFin(nombre_estacion_inicio, nombre_estacion_final, tabl
     estacion_final = tabla_estaciones[nombre_estacion_final]
 
     return estacion_inicio, estacion_final
+
+
+def getInformacionEstacion(estacion):
+
+    if isinstance(estacion, EstacionPaso):
+
+        return f"{estacion} -> {estacion.estaciones_adyacentes}"
+
+    else:
+
+        return f"{estacion} -> {estacion.transbordos}"
+
+
+def calcularDistancia(la1, lo1, la2, lo2):
+
+    """Esta funcion hace una implementación de la formula de Haversine para obtener la
+    distancia en metro que hay entre dos puntos geográficos. En este caso, los puntos 
+    geográficos son representados por la latitud y longitud de una estacion inicial y 
+    una estacion final.
+
+    Justamente este es el mecanismo que utilizamos como función heurística."""
+
+    la1 = math.radians(la1)
+
+    la2 = math.radians(la2)
+
+    lo1 = math.radians(lo1)
+
+    lo2 = math.radians(lo2)
+
+    delta_latitud = la2 - la1
+
+    delta_longitud = lo2 - lo1
+
+    return 2 * 6371000 * math.asin( math.sqrt( ( math.sin( delta_latitud / 2 )**2 ) + math.cos( la1 ) * ( math.cos( la2 ) ) * ( math.sin( delta_longitud / 2 )**2 ) ) )
+
+
+def encontrarRutaMasCorta(estacion_inicio, estacion_final):
+
+    """Esta funcion realiza una implementación del algoritmo A* para poder encontrar la ruta más corta entre dos estaciones que forman parte de la red del metro de la Ciudad de México"""
+
+    
+    #Esta lista almacena los nodos que están pendientes por evaluar.
+    lista_abierta = []
+
+    #Esta lista almacena los nodos que ya han sido evaluados.
+    lista_cerrada = []
+
+    """Esta variable se encarga de almacenar la cantidad de metros que hemos avanzado
+    desde la estacion de inicio hasta la estacion actual.
+    Practicamente, esta variable tiene la funcion g(n)."""
+    distancia_recorrida = 0
+
+    def obtenerEstacionMasCercana():
+
+        estaciones = lista_abierta[1:]
+
+        estacion_mas_cercana = lista_abierta[0]
+
+        coste_menor = distancia_recorrida 
+
+    lista_abierta.append(estacion_inicio)
+
+    while len(lista_abierta) > 0:
+
+        pass
+
