@@ -120,34 +120,149 @@ def calcularDistancia(la1, lo1, la2, lo2):
 
     return 2 * 6371000 * math.asin( math.sqrt( ( math.sin( delta_latitud / 2 )**2 ) + math.cos( la1 ) * ( math.cos( la2 ) ) * ( math.sin( delta_longitud / 2 )**2 ) ) )
 
+def obtenerEstacionesAdyacentes(estacion):
+
+    if isinstance(estacion, EstacionPaso):
+
+        #Si la estación es una estación de paso
+
+        estaciones_adyacentes = [registro_estacion[0] for registro_estacion in estacion.estaciones_adyacentes]
+
+    else:
+
+        #Si la estacion es una estación de correspondencia
+
+        estaciones_adyacentes = [registro_estacion[0] for estaciones_adyacentes_linea in estacion.transbordos.values() for registro_estacion in estaciones_adyacentes_linea]
+
+    return estaciones_adyacentes
+
+
+def obtenerCosteEntreEstacionesAdyacentes(estacion_padre, estacion_adyacente):
+
+    distancia_padre_hijo = 0
+
+    if estacion_padre is not estacion_adyacente:
+
+        if isinstance(estacion_padre, EstacionPaso):
+
+            for registro_estacion in estacion_padre.estaciones_adyacentes:
+
+                if registro_estacion[0] == estacion_adyacente:
+
+                    distancia_padre_hijo = registro_estacion[1]
+
+                    break
+
+        else:
+
+            adyacentes = [adyacente for estaciones_linea in estacion_padre.transbordos for adyacente in estaciones_linea]
+
+            for registro_estacion in adyacentes:
+
+                if registro_estacion[0] == estacion_adyacente:
+
+                    distancia_padre_hijo = registro_estacion[1]
+
+                    break
+
+    return distancia_padre_hijo
+
+def obtenerEstacionMenorCoste(estacion_final, distancias, lista_abierta):
+
+    estacion_menor_coste = lista_abierta[0]
+
+    menor_coste = distancias[estacion_menor_coste] + calcularDistancia(estacion_menor_coste.latitud, estacion_menor_coste.longitud, estacion_final.latitud, estacion_final.longitud)
+
+    for estacion in lista_abierta[1:]:
+
+        coste = distancias[estacion] + calcularDistancia(estacion.latitud, estacion.longitud, estacion_final.latitud, estacion_final.longitud)
+
+        if coste < menor_coste:
+
+            menor_coste = coste
+
+            estacion_menor_coste = estacion
+
+    return estacion_menor_coste 
+
 
 def encontrarRutaMasCorta(estacion_inicio, estacion_final):
 
-    """Esta funcion realiza una implementación del algoritmo A* para poder encontrar la ruta más corta entre dos estaciones que forman parte de la red del metro de la Ciudad de México"""
+    """Esta funcion realiza una implementación del algoritmo A* para poder encontrar la ruta más corta entre dos estaciones que forman parte de la red del metro de la Ciudad de México."""
 
+    """Inicialmente la lista abierta comienza almacenando únicamente la estacion a partir de
+    la cual iniciaremos el recorrido.
+
+    La función de esta lista es almacenar todos los nodos que debemos de ir evaluando y que
+    probablemente puedan llegar a formar parte del camino final."""
     
-    #Esta lista almacena los nodos que están pendientes por evaluar.
-    lista_abierta = []
+    lista_abierta = [estacion_inicio]
 
-    #Esta lista almacena los nodos que ya han sido evaluados.
+    """La lista cerrada inicialmente está vacía.
+
+    El propósito de esta lista es almacenar todos aquellos nodos del grafo que previamente
+    ya han sido evaluados."""
+
     lista_cerrada = []
 
-    """Esta variable se encarga de almacenar la cantidad de metros que hemos avanzado
-    desde la estacion de inicio hasta la estacion actual.
-    Practicamente, esta variable tiene la funcion g(n)."""
-    distancia_recorrida = 0
+    """Este diccionario tiene la finalidad de que para cada estación del metro que se vaya
+    explorando, se le asigna la estación de metro padre a partir de la cual llegamos a la
+    estacion del metro de evaluación.
 
-    def obtenerEstacionMasCercana():
+    La clave del diccionario es la estacion del metro hijo y la clave asociada es la
+    estacion del metro padre a partir de la cual llegamos al hijo.
 
-        estaciones = lista_abierta[1:]
+    Inicialmente esta lista almacena a la estacion de inicio como la estacion padre e hijo.
+    De esta manera, al ser tanto el hijo como el padre la misma estación, podemos comenzar
+    el proceso correctamente."""
 
-        estacion_mas_cercana = lista_abierta[0]
+    predecesores = {estacion_inicio : estacion_inicio}
 
-        coste_menor = distancia_recorrida 
+    """Este diccionario se encarga de llevar un registro de las distancia real (coste real)
+    de moverse desde la estacion padre hacia la estación hijo.
 
-    lista_abierta.append(estacion_inicio)
+    La clave de diccionario es el nodo hijo en cuestión, mientras que el valor asociado
+    es la distancia (en metro) de haberse movido desde la estación padre hasta la estación
+    hijo."""
 
-    while len(lista_abierta) > 0:
+    distancias = {estacion_inicio : 0}
 
-        pass
+    while lista_abierta:
+
+        estacion = obtenerEstacionMenorCoste(estacion_final, distancias, lista_abierta)
+
+        lista_abierta.remove(estacion)
+
+        lista_cerrada.append(estacion)
+
+        if estacion == estacion_final:
+
+            return construirRuta(estacion_inicio, estacion_final, predecesores)
+
+        for estacion_adyacente in obtenerEstacionesAdyacentes(estacion):
+
+            if estacion_adyacente not in lista_abierta and estacion_adyacente not in lista_cerrada:
+
+                predecesores[estacion_adyacente] = estacion
+
+                distancias[estacion_adyacente] = obtenerCosteEntreEstacionesAdyacentes(estacion, estacion_adyacente)
+
+                lista_abierta.append(estacion_adyacente)
+
+    return False
+
+
+def construirRuta(estacion_inicio, estacion_final, antecesores):
+
+    ruta = [estacion_final]
+
+    estacion = estacion_final
+
+    while estacion != estacion_inicio:
+
+        ruta.insert(0, antecesores[estacion])
+
+        estacion = antecesores[estacion]
+
+    return ruta
 
