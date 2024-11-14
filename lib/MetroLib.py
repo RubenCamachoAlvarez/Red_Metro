@@ -14,15 +14,15 @@ def generarTablaEstaciones(nombre_archivo_estaciones, nombre_archivo_distancias)
 
             registro = registro.strip().split(",")
 
-            nombre_estacion = registro[0]
+            nombre_estacion = registro[0].strip().lower()
 
             if nombre_estacion not in tabla_hash:
 
-                latitud = float(registro[1])
+                latitud = float(registro[1].strip())
 
-                longitud = float(registro[2])
+                longitud = float(registro[2].strip())
 
-                lineas = registro[3:]
+                lineas = [linea.strip().lower() for linea in registro[3:]]
 
                 if len(lineas) == 1:
 	
@@ -41,9 +41,13 @@ def generarTablaEstaciones(nombre_archivo_estaciones, nombre_archivo_distancias)
 
             registro = registro.strip().split(",")
 
-            estaciones = [tabla_hash[registro[0]], tabla_hash[registro[1]]]
+            nombre_estacion_1 = registro[0].strip().lower()
 
-            distancia = int(registro[2])
+            nombre_estacion_2 = registro[1].strip().lower()
+
+            estaciones = [tabla_hash[nombre_estacion_1], tabla_hash[nombre_estacion_2]]
+
+            distancia = int(registro[2].strip())
 
             indice_estacion_adyacente = 1
 
@@ -237,7 +241,7 @@ def encontrarRutaMasCorta(estacion_inicio, estacion_final):
 
         if estacion == estacion_final:
 
-            return construirRuta(estacion_inicio, estacion_final, predecesores)
+            return construirRuta(estacion_inicio, estacion_final, predecesores), contarNumeroEstacionesRecorridas(estacion_inicio, estacion_final, predecesores), calcularDistanciaTotalRecorrida(estacion_inicio, estacion_final, distancias, predecesores)
 
         for estacion_adyacente in obtenerEstacionesAdyacentes(estacion):
 
@@ -266,3 +270,36 @@ def construirRuta(estacion_inicio, estacion_final, antecesores):
 
     return ruta
 
+def contarNumeroEstacionesRecorridas(estacion_inicio, estacion_final, antecesores):
+
+    contador = 0
+
+    if estacion_inicio != estacion_final:
+
+        estacion = antecesores[estacion_final]
+
+        while estacion != estacion_inicio:
+
+            contador += 1
+
+            estacion = antecesores[estacion]
+
+        contador += 1
+
+    return contador
+
+def calcularDistanciaTotalRecorrida(estacion_inicio, estacion_final, distancias, antecesores):
+
+    distancia_recorrida = 0
+
+    if estacion_inicio != estacion_final:
+
+        estacion = estacion_final
+
+        while estacion != estacion_inicio:
+
+            distancia_recorrida += distancias[estacion]
+
+            estacion = antecesores[estacion]
+
+    return distancia_recorrida
